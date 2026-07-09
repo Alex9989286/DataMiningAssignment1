@@ -1,10 +1,6 @@
-# ============================================================
-# app.py - Cardiovascular Disease Risk Prediction (38 Features)
-# 调整所有数值为正常临床范围
-# ============================================================
-
 import streamlit as st
 import requests
+import json
 
 st.set_page_config(page_title="Cardiovascular Risk Predictor", layout="wide")
 
@@ -20,16 +16,37 @@ st.markdown("""
         border-radius: 10px;
         margin-bottom: 10px;
     }
+    .risk-low {
+        background-color: #d4edda;
+        padding: 15px;
+        border-radius: 10px;
+        border-left: 5px solid #28a745;
+    }
+    .risk-moderate {
+        background-color: #fff3cd;
+        padding: 15px;
+        border-radius: 10px;
+        border-left: 5px solid #ffc107;
+    }
+    .risk-high {
+        background-color: #f8d7da;
+        padding: 15px;
+        border-radius: 10px;
+        border-left: 5px solid #dc3545;
+    }
     </style>
 """, unsafe_allow_html=True)
 
 st.title("🫀 Cardiovascular Disease Risk Prediction")
-st.markdown("Move the sliders and select the health metrics below to analyze patient cardiovascular risk.")
+st.markdown("Enter patient health data to analyze cardiovascular risk using AI-powered assessment.")
 
-# API URL
-API_URL = "http://localhost:8000/predict"
 
-# ---- Input Section ----
+# n8n Webhook URL
+
+N8N_WEBHOOK_URL = "https://alexngjiansheng.app.n8n.cloud/webhook/retention"
+
+
+# Input Section
 st.header("📋 Patient Clinical Metrics")
 
 col_num1, col_num2, col_cat = st.columns([1, 1, 1.2], gap="large")
@@ -37,88 +54,68 @@ col_num1, col_num2, col_cat = st.columns([1, 1, 1.2], gap="large")
 with col_num1:
     st.subheader("🧬 Basic & Vital Metrics")
     
-    # 年龄: 正常范围 18-80
+    name = st.text_input("Patient Name", value="John Doe")
+    
     age = st.slider(
         "Age (years)",
-        min_value=18, max_value=80, value=50, step=1,
-        help="Normal: 18-80 years"
+        min_value=18, max_value=80, value=50, step=1
     )
     
-    # BMI: 正常范围 15-45
     bmi = st.slider(
         "BMI",
-        min_value=15.0, max_value=45.0, value=25.0, step=0.5,
-        help="Normal: 18.5-24.9, Overweight: 25-29.9, Obese: 30+"
+        min_value=15.0, max_value=45.0, value=25.0, step=0.5
     )
     
-    # 收缩压: 正常范围 90-180
     systolic_bp = st.slider(
         "Systolic BP (mmHg)",
-        min_value=90, max_value=180, value=120, step=1,
-        help="Normal: <120, Elevated: 120-129, High: 130+"
+        min_value=90, max_value=180, value=120, step=1
     )
     
-    # 舒张压: 正常范围 60-110
     diastolic_bp = st.slider(
         "Diastolic BP (mmHg)",
-        min_value=60, max_value=110, value=80, step=1,
-        help="Normal: <80, Elevated: 80-89, High: 90+"
+        min_value=60, max_value=110, value=80, step=1
     )
     
-    # 心率: 正常范围 50-100
     heart_rate = st.slider(
         "Heart Rate (bpm)",
-        min_value=50, max_value=100, value=72, step=1,
-        help="Normal: 60-100 bpm"
+        min_value=50, max_value=100, value=72, step=1
     )
 
 with col_num2:
     st.subheader("🩸 Blood Lab Results")
     
-    # 血糖: 正常范围 70-200
     glucose = st.slider(
         "Glucose (mg/dL)",
-        min_value=70, max_value=200, value=95, step=5,
-        help="Normal fasting: <100, Prediabetes: 100-125, Diabetes: 126+"
+        min_value=70, max_value=200, value=95, step=5
     )
     
-    # HbA1c: 正常范围 4.0-9.0
     hba1c = st.slider(
         "HbA1c Level (%)",
-        min_value=4.0, max_value=9.0, value=5.5, step=0.1,
-        help="Normal: <5.7, Prediabetes: 5.7-6.4, Diabetes: 6.5+"
+        min_value=4.0, max_value=9.0, value=5.5, step=0.1
     )
     
-    # 总胆固醇: 正常范围 125-280
     cholesterol = st.slider(
         "Total Cholesterol (mg/dL)",
-        min_value=125, max_value=280, value=190, step=5,
-        help="Normal: <200, Borderline: 200-239, High: 240+"
+        min_value=125, max_value=280, value=190, step=5
     )
     
-    # 甘油三酯: 正常范围 50-300
     triglycerides = st.slider(
         "Triglycerides (mg/dL)",
-        min_value=50, max_value=300, value=150, step=5,
-        help="Normal: <150, Borderline: 150-199, High: 200+"
+        min_value=50, max_value=300, value=150, step=5
     )
     
-    # HDL: 正常范围 35-80
     hdl = st.slider(
         "HDL Cholesterol (mg/dL)",
-        min_value=35, max_value=80, value=55, step=1,
-        help="Normal: >40 (Male), >50 (Female)"
+        min_value=35, max_value=80, value=55, step=1
     )
     
-    # LDL: 正常范围 50-180
     ldl = st.slider(
         "LDL Cholesterol (mg/dL)",
-        min_value=50, max_value=180, value=100, step=5,
-        help="Optimal: <100, Near optimal: 100-129, High: 160+"
+        min_value=50, max_value=180, value=100, step=5
     )
 
 with col_cat:
-    st.subheader("📑 Categorical Status & History")
+    st.subheader("📑 Patient Profile")
     
     gender = st.radio("Gender", ["Female", "Male"], horizontal=True)
     smoking = st.radio("Smoking History", ["Never", "Former", "Current"], horizontal=True)
@@ -138,7 +135,7 @@ with col_cat:
         st.write("")
 
 
-# ---- Build features ----
+
 def build_features():
     smoking_map = {"Never": 2, "Former": 1, "Current": 0}
     physical_map = {"Low": 0, "Moderate": 1, "High": 2}
@@ -147,7 +144,6 @@ def build_features():
     education_map = {"Primary": 0, "Secondary": 1, "Tertiary": 2}
     employment_map = {"Unemployed": 0, "Employed": 1, "Retired": 2}
     
-    # Age level (auto-calculated)
     if age < 30:
         age_level = 0
     elif age < 50:
@@ -157,7 +153,6 @@ def build_features():
     else:
         age_level = 3
     
-    # BMI level (auto-calculated)
     if bmi < 18.5:
         bmi_level = 0
     elif bmi < 25:
@@ -176,7 +171,6 @@ def build_features():
     
     high_ldl = 1 if ldl >= 160 else 0
     
-    # 38 features
     features = [
         age_level,
         bmi_level,
@@ -217,59 +211,89 @@ def build_features():
         1.0 if high_ldl == 0 else 0.0,
         1.0 if high_ldl == 1 else 0.0,
     ]
-    
     return features
 
 
 st.markdown("---")
 
-# ---- Predict ----
-if st.button("🩺 Predict Cardiovascular Risk", type="primary", use_container_width=True):
+if st.button("🩺 Analyze Cardiovascular Risk", type="primary", use_container_width=True):
     try:
-        with st.spinner("Analyzing patient data..."):
+        with st.spinner("Analyzing patient data with AI..."):
             features = build_features()
             
-            response = requests.post(API_URL, json={"features": features})
+            payload = {
+                "name": name,
+                "age": age,
+                "bmi": bmi,
+                "systolic_bp": systolic_bp,
+                "diastolic_bp": diastolic_bp,
+                "heart_rate": heart_rate,
+                "glucose": glucose,
+                "hba1c": hba1c,
+                "cholesterol": cholesterol,
+                "triglycerides": triglycerides,
+                "hdl": hdl,
+                "ldl": ldl,
+                "gender": gender,
+                "smoking": smoking,
+                "physical_activity": physical_activity,
+                "stress_level": stress_level,
+                "sugar_consumption": sugar_consumption,
+                "education_level": education_level,
+                "employment_status": employment_status,
+                "diabetes": diabetes,
+                "family_history": family_history,
+                "features": features
+            }
+            
+            response = requests.post(N8N_WEBHOOK_URL, json=payload, timeout=60)
             
             if response.status_code == 200:
                 result = response.json()
                 
-                st.header("📊 Prediction Results")
+                st.header("📊 Assessment Results")
                 
-                col1, col2, col3 = st.columns(3)
-                
-                with col1:
-                    if result["prediction"] == "Normal":
-                        st.success(f"✅ {result['prediction']}")
-                    else:
-                        st.error(f"⚠️ {result['prediction']}")
-                
-                with col2:
-                    st.metric("Confidence", f"{result['confidence']*100:.1f}%")
-                
-                with col3:
-                    st.metric("Risk Score", f"{(1 - result['confidence'])*100:.1f}%")
-                
-                st.subheader("📈 Probability Distribution")
-                st.bar_chart({
-                    "Class": ["Abnormal", "Normal"],
-                    "Probability": [
-                        result["probabilities"]["Abnormal"],
-                        result["probabilities"]["Normal"]
-                    ]
-                }, x="Class", y="Probability")
-                
-                st.subheader("📋 Recommendation")
-                if result["prediction"] == "Normal":
-                    st.info("🟢 Low cardiovascular risk. Maintain healthy lifestyle.")
+                # Risk Tier with color coding
+                risk_tier = result.get("risk_tier", "Unknown")
+                if risk_tier == "Low":
+                    st.markdown(f'<div class="risk-low"><h3>🟢 Risk Tier: {risk_tier}</h3></div>', unsafe_allow_html=True)
+                elif risk_tier == "Moderate":
+                    st.markdown(f'<div class="risk-moderate"><h3>🟡 Risk Tier: {risk_tier}</h3></div>', unsafe_allow_html=True)
+                elif risk_tier == "High":
+                    st.markdown(f'<div class="risk-high"><h3>🔴 Risk Tier: {risk_tier}</h3></div>', unsafe_allow_html=True)
                 else:
-                    st.warning("🔴 Elevated cardiovascular risk. Consult a doctor.")
+                    st.markdown(f'<h3>Risk Tier: {risk_tier}</h3>', unsafe_allow_html=True)
+                
+                # Metrics
+                col1, col2, col3 = st.columns(3)
+                with col1:
+                    st.metric("Prediction", result.get("prediction", "N/A"))
+                with col2:
+                    confidence = result.get("confidence", 0) * 100
+                    st.metric("Confidence", f"{confidence:.1f}%")
+                with col3:
+                    st.metric("Normal Probability", f"{result.get('probabilities', {}).get('Normal', 0)*100:.1f}%")
+                
+                # Recommendation
+                st.subheader("💡 Recommendation")
+                st.info(result.get("recommendation", "No recommendation available."))
+                
+                # Draft Message
+                with st.expander("📨 Draft Message to Patient"):
+                    st.text_area("Message", result.get("draft_message", "No message available."), height=200)
                 
             else:
                 st.error(f"Error: {response.status_code}")
+                st.text(response.text)
                 
     except requests.exceptions.ConnectionError:
-        st.error("Cannot connect to API. Please make sure FastAPI is running.")
-        
+        st.error("❌ Cannot connect to n8n. Please make sure the workflow is active and the URL is correct.")
+    except requests.exceptions.Timeout:
+        st.error("❌ Request timed out. Please try again.")
     except Exception as e:
-        st.error(f"An error occurred: {str(e)}")
+        st.error(f"❌ An error occurred: {str(e)}")
+
+
+
+st.markdown("---")
+st.caption("🫀 Cardiovascular Risk Predictor | Powered by n8n Agentic Workflow")
