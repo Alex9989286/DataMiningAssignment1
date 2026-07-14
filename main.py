@@ -1,5 +1,5 @@
 # ============================================================
-# main.py - Cardiovascular Risk Prediction API (38 Features)
+# main.py - Cardiovascular Risk Prediction API (36 Features)
 # ============================================================
 
 from fastapi import FastAPI, HTTPException

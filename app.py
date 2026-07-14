@@ -40,11 +40,8 @@ st.markdown("""
 st.title("🫀 Cardiovascular Disease Risk Prediction")
 st.markdown("Enter patient health data to analyze cardiovascular risk using AI-powered assessment.")
 
-
 # n8n Webhook URL
-
-N8N_WEBHOOK_URL = "https://alexngjiansheng.app.n8n.cloud/webhook/retention"
-
+N8N_WEBHOOK_URL = "https://alex8881314.app.n8n.cloud/webhook/retention"
 
 # Input Section
 st.header("📋 Patient Clinical Metrics")
@@ -122,18 +119,33 @@ with col_cat:
     physical_activity = st.radio("Physical Activity Level", ["Low", "Moderate", "High"], horizontal=True)
     stress_level = st.radio("Stress Level", ["Low", "Medium", "High"], horizontal=True)
     sugar_consumption = st.radio("Sugar Consumption", ["Low", "Medium", "High"], horizontal=True)
+    
+    sleep_hours = st.slider(
+        "Sleep Hours (per night)",
+        min_value=4.0, max_value=10.0, value=7.0, step=0.5
+    )
+    
+    alcohol_intake = st.radio(
+        "Alcohol Intake",
+        ["None", "Low", "Moderate", "High"],
+        horizontal=True
+    )
+    
+    salt_intake = st.radio(
+        "Salt Intake",
+        ["Low", "Medium", "High"],
+        horizontal=True
+    )
+    
     education_level = st.radio("Education Level", ["Primary", "Secondary", "Tertiary"], horizontal=True)
     employment_status = st.radio("Employment Status", ["Unemployed", "Employed", "Retired"], horizontal=True)
     
     st.markdown("**Medical History**")
-    sub_col1, sub_col2, sub_col3 = st.columns(3)
+    sub_col1, sub_col2 = st.columns(2)
     with sub_col1:
         diabetes = st.radio("Diabetes", ["No", "Yes"], horizontal=False)
     with sub_col2:
         family_history = st.radio("Family History", ["No", "Yes"], horizontal=False)
-    with sub_col3:
-        st.write("")
-
 
 
 def build_features():
@@ -143,6 +155,8 @@ def build_features():
     sugar_map = {"Low": 0, "Medium": 1, "High": 2}
     education_map = {"Primary": 0, "Secondary": 1, "Tertiary": 2}
     employment_map = {"Unemployed": 0, "Employed": 1, "Retired": 2}
+    alcohol_map = {"None": 0, "Low": 1, "Moderate": 2, "High": 3}
+    salt_map = {"Low": 1, "Medium": 2, "High": 3}
     
     if age < 30:
         age_level = 0
@@ -171,45 +185,45 @@ def build_features():
     
     high_ldl = 1 if ldl >= 160 else 0
     
+    # ✅ 36 个特征（删除了 diabetes_No 和 diabetes_Yes）
     features = [
-        age_level,
-        bmi_level,
-        smoking_map[smoking],
-        float(age),
-        float(age) / 100,
-        float(bmi),
-        float(hba1c),
-        float(glucose),
-        float(cholesterol),
-        7.0,
-        float(triglycerides),
-        physical_map[physical_activity],
-        stress_map[stress_level],
-        (systolic_bp + diastolic_bp) / 2,
-        sugar_map[sugar_consumption],
-        5.0,
-        10.0,
-        float(systolic_bp),
-        float(diastolic_bp),
-        10.0,
-        8.0,
-        float(heart_rate),
-        float(hdl),
-        float(ldl),
-        education_map[education_level],
-        employment_map[employment_status],
-        1.0 if gender == "Female" else 0.0,
-        1.0 if gender == "Male" else 0.0,
-        1.0 if diabetes == "No" else 0.0,
-        1.0 if diabetes == "Yes" else 0.0,
-        1.0 if family_history == "No" else 0.0,
-        1.0 if family_history == "Yes" else 0.0,
-        1.0 if high_bp == 0 else 0.0,
-        1.0 if high_bp == 1 else 0.0,
-        1.0 if low_hdl == 0 else 0.0,
-        1.0 if low_hdl == 1 else 0.0,
-        1.0 if high_ldl == 0 else 0.0,
-        1.0 if high_ldl == 1 else 0.0,
+        age_level,                                         # 0
+        bmi_level,                                         # 1
+        smoking_map[smoking],                              # 2
+        float(age),                                        # 3
+        float(age) / 100,                                  # 4
+        float(bmi),                                        # 5
+        float(hba1c),                                      # 6
+        float(glucose),                                    # 7
+        float(cholesterol),                                # 8
+        float(sleep_hours),                                # 9
+        float(triglycerides),                              # 10
+        physical_map[physical_activity],                   # 11
+        stress_map[stress_level],                          # 12
+        (systolic_bp + diastolic_bp) / 2,                  # 13
+        sugar_map[sugar_consumption],                      # 14
+        5.0,                                               # 15: crp_level
+        10.0,                                              # 16: homocysteine_level
+        float(systolic_bp),                                # 17
+        float(diastolic_bp),                               # 18
+        float(alcohol_map[alcohol_intake]),                # 19
+        float(salt_map[salt_intake]),                      # 20
+        float(heart_rate),                                 # 21
+        float(hdl),                                        # 22
+        float(ldl),                                        # 23
+        education_map[education_level],                    # 24
+        employment_map[employment_status],                 # 25
+        1.0 if gender == "Female" else 0.0,                # 26
+        1.0 if gender == "Male" else 0.0,                  # 27
+        # diabetes_No 和 diabetes_Yes 已删除
+        1.0 if family_history == "No" else 0.0,            # 28
+        1.0 if family_history == "Yes" else 0.0,           # 29
+        1.0 if high_bp == 0 else 0.0,                      # 30
+        1.0 if high_bp == 1 else 0.0,                      # 31
+        1.0 if low_hdl == 0 else 0.0,                      # 32
+        1.0 if low_hdl == 1 else 0.0,                      # 33
+        1.0 if high_ldl == 0 else 0.0,                     # 34
+        1.0 if high_ldl == 1 else 0.0,                     # 35
     ]
     return features
 
@@ -234,6 +248,9 @@ if st.button("🩺 Analyze Cardiovascular Risk", type="primary", use_container_w
                 "triglycerides": triglycerides,
                 "hdl": hdl,
                 "ldl": ldl,
+                "sleep_hours": sleep_hours,
+                "alcohol_intake": alcohol_intake,
+                "salt_intake": salt_intake,
                 "gender": gender,
                 "smoking": smoking,
                 "physical_activity": physical_activity,
@@ -253,7 +270,6 @@ if st.button("🩺 Analyze Cardiovascular Risk", type="primary", use_container_w
                 
                 st.header("📊 Assessment Results")
                 
-                # Risk Tier with color coding
                 risk_tier = result.get("risk_tier", "Unknown")
                 if risk_tier == "Low":
                     st.markdown(f'<div class="risk-low"><h3>🟢 Risk Tier: {risk_tier}</h3></div>', unsafe_allow_html=True)
@@ -264,7 +280,6 @@ if st.button("🩺 Analyze Cardiovascular Risk", type="primary", use_container_w
                 else:
                     st.markdown(f'<h3>Risk Tier: {risk_tier}</h3>', unsafe_allow_html=True)
                 
-                # Metrics
                 col1, col2, col3 = st.columns(3)
                 with col1:
                     st.metric("Prediction", result.get("prediction", "N/A"))
@@ -274,11 +289,9 @@ if st.button("🩺 Analyze Cardiovascular Risk", type="primary", use_container_w
                 with col3:
                     st.metric("Normal Probability", f"{result.get('probabilities', {}).get('Normal', 0)*100:.1f}%")
                 
-                # Recommendation
                 st.subheader("💡 Recommendation")
                 st.info(result.get("recommendation", "No recommendation available."))
                 
-                # Draft Message
                 with st.expander("📨 Draft Message to Patient"):
                     st.text_area("Message", result.get("draft_message", "No message available."), height=200)
                 
@@ -292,7 +305,6 @@ if st.button("🩺 Analyze Cardiovascular Risk", type="primary", use_container_w
         st.error("❌ Request timed out. Please try again.")
     except Exception as e:
         st.error(f"❌ An error occurred: {str(e)}")
-
 
 
 st.markdown("---")
