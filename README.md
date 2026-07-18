@@ -58,8 +58,8 @@ The system follows a 5-layer agentic AI architecture:
 
 ```
 Webhook → HTTP Request (FastAPI) → AI Agent (Gemini) → Respond to Webhook
-  ↓              ↓                        ↓                    ↓
- 接收数据      调用预测模型             分析结果+生成建议      返回JSON
+    ↓              ↓                        ↓                    ↓
+Receive Data   Call Prediction Model   Analyze + Generate   Return JSON
 ```
 
 ### Data Flow
@@ -245,14 +245,3 @@ streamlit run app.py
 
 **Alex Ng Jian Sheng** (SWE2304249)  
 SWE402 Data Mining, Xiamen University Malaysia  
-Lecturer: Teo Bee Guan
-
----
-
-## 🙏 Acknowledgments
-
-- Dr. Teo Bee Guan for supervision
-- World Health Organization for health statistics
-- World Heart Federation for CVD information
-- Mendeley Data for dataset
-
